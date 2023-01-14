@@ -1,0 +1,38 @@
+#!/bin/sh
+# helpを表示するオプションが不明なコマンドに対してバージョンを表示する
+# 
+# execute:
+#   hel command
+
+set -Ceuo pipefail
+
+# オプションの存在を確認する
+# 引数: コマンド名 オプション
+# 戻り値: 0: 存在する, 1: 存在しない
+function has_option() {
+	local cmd=$1
+	local option=$2
+	local _=$($cmd $option &> /dev/null)
+	return $?
+}
+
+command=$1
+option_list=(--help -help -H -h)
+# makeコマンドの場合はhelpをオプションとして認識する
+if [[ $1 == "make" ]]; then
+	option_list=(help)
+fi
+
+if [[ $# == 0 ]]; then
+	echo "command not found"
+	exit 1
+fi
+
+for option in ${option_list[@]}; do
+	ret=$(has_option $1 $option)
+	if [[ $? == 0 ]]; then
+		$1 $option
+		exit 0
+	fi
+	echo "not found $option"
+done
